@@ -188,78 +188,97 @@
     <header class="sticky top-0 z-30 header-fixed pt-safe bg-white/95">
         <div class="px-4 pt-3 pb-1">
             
-            <!-- 1. 카테고리 탭 -->
-            <div class="flex border-b border-slate-100 relative pr-10 mb-2">
-                <button onclick="switchTab('model')" id="tab-model" class="tab-btn active">📱 모델</button>
-                <button onclick="switchTab('delivery')" id="tab-delivery" class="tab-btn">📦 수령</button>
-                <button onclick="switchTab('return')" id="tab-return" class="tab-btn">↩️ 반납</button>
-                <button onclick="toggleCategorySection()" class="absolute right-0 top-0 bottom-0 w-10 flex items-center justify-center text-slate-400">
-                    <svg id="fold-arrow" class="fold-icon transition-transform" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
-                </button>
-            </div>
-
-            <!-- 2. 카테고리 상세 필터 -->
-            <div id="category-section" class="pb-3">
-                <div id="filter-group-model" class="flex gap-1.5 overflow-x-auto hide-scrollbar">
-                    <button onclick="setModelFilter('all')" class="chip-btn model-filter-item active" data-id="all">전체</button>
-                    <button onclick="setModelFilter('23U')" class="chip-btn model-filter-item" data-id="23U">23U</button>
-                    <button onclick="setModelFilter('24U')" class="chip-btn model-filter-item" data-id="24U">24U</button>
-                    <button onclick="setModelFilter('25U')" class="chip-btn model-filter-item" data-id="25U">25U</button>
-                    <button onclick="setModelFilter('26U')" class="chip-btn model-filter-item" data-id="26U">26U</button>
-                    <button onclick="setModelFilter('17P')" class="chip-btn model-filter-item" data-id="17P">17P</button>
-                    <button onclick="setModelFilter('17PM')" class="chip-btn model-filter-item" data-id="17PM">17PM</button>
-                </div>
-                <div id="filter-group-delivery" class="hidden gap-1.5 flex-col">
-                    <div class="flex gap-1.5 overflow-x-auto hide-scrollbar">
-                        <button onclick="setDeliveryFilter('all')" class="chip-btn delivery-filter-item active" data-id="all">전체</button>
-                        <button onclick="setDeliveryFilter('택배')" class="chip-btn delivery-filter-item" data-id="택배">택배</button>
-                        <button onclick="setDeliveryFilter('공연장')" class="chip-btn delivery-filter-item" data-id="공연장">공연장</button>
-                        <button onclick="setDeliveryFilter('사무실')" class="chip-btn delivery-filter-item" data-id="사무실">사무실</button>
-                    </div>
-                    <!-- 수령 방법 하위 필터 (남은인원/수령인원) -->
-                    <div id="sub-filter-group-delivery" class="hidden gap-1.5 mt-2 overflow-x-auto hide-scrollbar">
-                        <button onclick="setDeliverySubFilter('all')" class="chip-btn delivery-sub-filter-item active" data-id="all">전체</button>
-                        <button onclick="setDeliverySubFilter('remaining')" class="chip-btn delivery-sub-filter-item" data-id="remaining">남은인원</button>
-                        <button onclick="setDeliverySubFilter('pickedup')" class="chip-btn delivery-sub-filter-item" data-id="pickedup">수령인원</button>
-                    </div>
-                </div>
-                <div id="filter-group-return" class="hidden gap-1.5 overflow-x-auto hide-scrollbar">
-                    <button onclick="setReturnFilter('all')" class="chip-btn return-filter-item active" data-id="all">전체</button>
-                    <button onclick="setReturnFilter('택배')" class="chip-btn return-filter-item" data-id="택배">택배</button>
-                    <button onclick="setReturnFilter('당일')" class="chip-btn return-filter-item" data-id="당일">당일</button>
-                    <button onclick="setReturnFilter('사무실')" class="chip-btn return-filter-item" data-id="사무실">사무실</button>
-                </div>
-            </div>
-
-            <!-- 3. 검색바 & 퀵 필터 버튼 -->
+            <!-- 1. 검색바 & 주요 퀵 액션 (항상 노출) -->
             <div class="flex items-center gap-1.5 mb-2 overflow-x-auto hide-scrollbar pb-1">
                 <div class="flex-1 relative header-input-box px-3 shadow-sm focus-within:ring-1 focus-within:ring-blue-400 min-w-[130px]">
                     <svg class="text-slate-400 mr-2 shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                     <input type="text" id="search-input" onkeyup="filterData()" placeholder="전체 정보 통합 검색" class="w-full bg-transparent border-none text-[12px] font-bold text-slate-900 placeholder-slate-400 outline-none p-0 h-full">
                 </div>
 
-                <button onclick="toggleBackupFilter()" id="btn-quick-backup" class="h-[38px] px-3 rounded-xl text-[12px] font-bold border border-slate-200 bg-white text-slate-600 shadow-sm shrink-0 active:scale-95 transition-all flex items-center gap-1">
-                    💾 백업 <span id="quick-backup-count" class="ml-1 text-[10px] opacity-70 font-tnum">0</span>
-                </button>
-                <button onclick="toggleExtensionFilter()" id="btn-quick-extension" class="h-[38px] px-3 rounded-xl text-[12px] font-bold border border-slate-200 bg-white text-slate-600 shadow-sm shrink-0 active:scale-95 transition-all flex items-center gap-1">
-                    ⏰ 연장 <span id="quick-extension-count" class="ml-1 text-[10px] opacity-70 font-tnum">0</span>
-                </button>
-
-                <button onclick="openCalendar()" class="header-icon-btn shadow-sm relative active:scale-95 transition-all shrink-0">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    <div id="date-active-dot" class="hidden absolute top-2 right-2 w-1.5 h-1.5 bg-blue-500 rounded-full border border-white"></div>
-                </button>
                 <button onclick="fetchData()" class="header-icon-btn shadow-sm shrink-0 active:scale-95 transition-all">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
                 </button>
+                <button onclick="toggleSettings()" id="btn-settings" class="header-icon-btn shadow-sm shrink-0 active:scale-95 transition-all bg-white relative">
+                    <svg class="text-slate-500" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    <div id="settings-active-dot" class="hidden absolute top-0.5 right-0.5 w-2 h-2 bg-blue-500 rounded-full border-2 border-white"></div>
+                </button>
             </div>
 
-            <!-- 4. 날짜별 예약 요약 버튼 (가로 스크롤) -->
+            <!-- 2. 고급 필터 설정 패널 (톱니바퀴 클릭 시 토글됨) -->
+            <div id="settings-panel" class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-3 mb-3 shadow-inner transition-all">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[12px] font-black text-slate-700">고급 필터 설정</span>
+                    <button onclick="toggleSettings()" class="text-slate-400 p-1.5 bg-white rounded-full border border-slate-200 shadow-sm active:scale-90">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                
+                <!-- 날짜 및 부가 기능 버튼 -->
+                <div class="flex items-center gap-1.5 mb-3 overflow-x-auto hide-scrollbar pb-1">
+                    <button onclick="openCalendar()" class="h-[34px] px-3 rounded-xl text-[11px] font-bold border border-slate-200 bg-white text-slate-600 shadow-sm shrink-0 active:scale-95 transition-all flex items-center gap-1 relative">
+                        📅 달력 지정
+                        <div id="date-active-dot" class="hidden absolute top-1 right-1 w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                    </button>
+                    <button onclick="toggleHideAssignedFilter()" id="btn-quick-hide-assigned" class="h-[34px] px-3 rounded-xl text-[11px] font-bold border border-slate-200 bg-white text-slate-600 shadow-sm shrink-0 active:scale-95 transition-all flex items-center gap-1">
+                        🙈 배정숨김
+                    </button>
+                    <button onclick="toggleBackupFilter()" id="btn-quick-backup" class="h-[34px] px-3 rounded-xl text-[11px] font-bold border border-slate-200 bg-white text-slate-600 shadow-sm shrink-0 active:scale-95 transition-all flex items-center gap-1 hidden">
+                        💾 백업 <span id="quick-backup-count" class="ml-1 text-[10px] opacity-70 font-tnum">0</span>
+                    </button>
+                    <button onclick="toggleExtensionFilter()" id="btn-quick-extension" class="h-[34px] px-3 rounded-xl text-[11px] font-bold border border-slate-200 bg-white text-slate-600 shadow-sm shrink-0 active:scale-95 transition-all flex items-center gap-1 hidden">
+                        ⏰ 연장 <span id="quick-extension-count" class="ml-1 text-[10px] opacity-70 font-tnum">0</span>
+                    </button>
+                </div>
+
+                <!-- 카테고리 탭 -->
+                <div class="flex border-b border-slate-200 relative mb-2">
+                    <button onclick="switchTab('model')" id="tab-model" class="tab-btn active !py-2 !text-[12px]">📱 모델</button>
+                    <button onclick="switchTab('delivery')" id="tab-delivery" class="tab-btn !py-2 !text-[12px]">📦 수령</button>
+                    <button onclick="switchTab('return')" id="tab-return" class="tab-btn !py-2 !text-[12px]">↩️ 반납</button>
+                </div>
+
+                <!-- 카테고리 상세 필터 -->
+                <div id="category-section" class="pb-1">
+                    <div id="filter-group-model" class="flex gap-1.5 overflow-x-auto hide-scrollbar">
+                        <button onclick="setModelFilter('all')" class="chip-btn model-filter-item active" data-id="all">전체</button>
+                        <button onclick="setModelFilter('23U')" class="chip-btn model-filter-item" data-id="23U">23U</button>
+                        <button onclick="setModelFilter('24U')" class="chip-btn model-filter-item" data-id="24U">24U</button>
+                        <button onclick="setModelFilter('25U')" class="chip-btn model-filter-item" data-id="25U">25U</button>
+                        <button onclick="setModelFilter('26U')" class="chip-btn model-filter-item" data-id="26U">26U</button>
+                        <button onclick="setModelFilter('17P')" class="chip-btn model-filter-item" data-id="17P">17P</button>
+                        <button onclick="setModelFilter('17PM')" class="chip-btn model-filter-item" data-id="17PM">17PM</button>
+                    </div>
+                    <div id="filter-group-delivery" class="hidden gap-1.5 flex-col">
+                        <div class="flex gap-1.5 overflow-x-auto hide-scrollbar">
+                            <button onclick="setDeliveryFilter('all')" class="chip-btn delivery-filter-item active" data-id="all">전체</button>
+                            <button onclick="setDeliveryFilter('택배')" class="chip-btn delivery-filter-item" data-id="택배">택배</button>
+                            <button onclick="setDeliveryFilter('공연장')" class="chip-btn delivery-filter-item" data-id="공연장">공연장</button>
+                            <button onclick="setDeliveryFilter('사무실')" class="chip-btn delivery-filter-item" data-id="사무실">사무실</button>
+                        </div>
+                        <div id="sub-filter-group-delivery" class="hidden gap-1.5 mt-2 overflow-x-auto hide-scrollbar">
+                            <button onclick="setDeliverySubFilter('all')" class="chip-btn delivery-sub-filter-item active" data-id="all">전체</button>
+                            <button onclick="setDeliverySubFilter('remaining')" class="chip-btn delivery-sub-filter-item" data-id="remaining">남은인원</button>
+                            <button onclick="setDeliverySubFilter('pickedup')" class="chip-btn delivery-sub-filter-item" data-id="pickedup">수령인원</button>
+                        </div>
+                    </div>
+                    <div id="filter-group-return" class="hidden gap-1.5 overflow-x-auto hide-scrollbar">
+                        <button onclick="setReturnFilter('all')" class="chip-btn return-filter-item active" data-id="all">전체</button>
+                        <button onclick="setReturnFilter('택배')" class="chip-btn return-filter-item" data-id="택배">택배</button>
+                        <button onclick="setReturnFilter('당일')" class="chip-btn return-filter-item" data-id="당일">당일</button>
+                        <button onclick="setReturnFilter('사무실')" class="chip-btn return-filter-item" data-id="사무실">사무실</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 날짜별 예약 요약 버튼 (가로 스크롤) -->
             <div id="date-summary-container" class="flex gap-2 overflow-x-auto hide-scrollbar mb-2 pb-1">
                 <!-- 데이터를 기반으로 동적 생성됨 -->
             </div>
 
-            <!-- 5. 날짜 바 -->
+            <!-- 4. 날짜 바 -->
             <div id="active-date-bar" class="hidden mb-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl flex justify-between items-center">
                 <span id="active-date-text" class="text-blue-600 text-xs font-bold font-tnum"></span>
                 <button onclick="clearDate(event)" class="text-blue-400 hover:text-blue-600 font-bold text-[10px] px-2 py-1 bg-white rounded-lg border border-blue-100">해제</button>
@@ -458,8 +477,15 @@
         let dateRange = { start: null, end: null };
         let calCurrentDate = new Date(); 
         let selectedSpecificDates = []; // 다중 선택된 날짜를 저장할 배열
+        let isHideAssignedActive = true; // 배정숨김 상태 변수 (기본 활성화)
 
         window.onload = () => {
+            // 배정숨김 버튼 기본 활성화 UI 적용
+            const btnHideAssigned = document.getElementById('btn-quick-hide-assigned');
+            if (btnHideAssigned) {
+                btnHideAssigned.classList.add('bg-slate-800', 'text-white', 'border-slate-800');
+                btnHideAssigned.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+            }
             fetchData();
         };
 
@@ -489,6 +515,14 @@
 
             allData.forEach(item => {
                 if (item.status === '취소') return; // 취소 건은 집계에서 제외
+                
+                // 배정숨김 활성화 시, 기기가 이미 배정된 건은 집계에서 제외
+                if (isHideAssignedActive) {
+                    const rawModelForCheck = (item.model || '').toUpperCase();
+                    const cleanModelCheck = rawModelForCheck.replace(/\s*\+?\s*보조배터리/g, '').trim();
+                    if (/\d$/.test(cleanModelCheck)) return;
+                }
+
                 const d = item.startDate;
                 if (!d || d < todayStr) return; // 오늘 이전 일정은 버튼에서 제외
                 
@@ -499,7 +533,7 @@
             container.innerHTML = '';
             
             if(sortedDates.length === 0) {
-                container.innerHTML = '<span class="text-[11px] text-slate-400 py-2 px-1">예정된 일정이 없습니다.</span>';
+                container.innerHTML = '<span class="text-[11px] text-slate-400 py-2 px-1">해당하는 일정이 없습니다.</span>';
                 return;
             }
 
@@ -601,6 +635,9 @@
                 
                 const cleanModel = model.replace(/\s*\+?\s*보조배터리/g, '').trim();
                 const isAssigned = /\d$/.test(cleanModel);
+
+                // 배정숨김 버튼이 활성화된 상태에서 기기 배정이 완료된 건은 리스트에서 제외
+                if (isHideAssignedActive && isAssigned) return false;
 
                 const matchQuery = !query || Object.values(item).some(val => 
                     String(val).toLowerCase().includes(query)
@@ -741,6 +778,31 @@
                     }
                 }
             }
+
+            // 고급 필터 사용 여부에 따른 톱니바퀴 아이콘 뱃지 업데이트
+            const settingsDot = document.getElementById('settings-active-dot');
+            if (settingsDot) {
+                if (currentModelFilter !== 'all' || currentDeliveryFilter !== 'all' || currentReturnFilter !== 'all' || currentDeliverySubFilter !== 'all') {
+                    settingsDot.classList.remove('hidden');
+                } else {
+                    settingsDot.classList.add('hidden');
+                }
+            }
+        }
+
+        function toggleSettings() {
+            const panel = document.getElementById('settings-panel');
+            const btn = document.getElementById('btn-settings');
+            
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                btn.classList.add('bg-slate-100');
+                btn.classList.remove('bg-white');
+            } else {
+                panel.classList.add('hidden');
+                btn.classList.remove('bg-slate-100');
+                btn.classList.add('bg-white');
+            }
         }
 
         function toggleBackupFilter() {
@@ -757,6 +819,22 @@
             } else {
                 setModelFilter('연장');
             }
+        }
+
+        function toggleHideAssignedFilter() {
+            isHideAssignedActive = !isHideAssignedActive;
+            const btn = document.getElementById('btn-quick-hide-assigned');
+            if (btn) {
+                if (isHideAssignedActive) {
+                    btn.classList.add('bg-slate-800', 'text-white', 'border-slate-800');
+                    btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+                } else {
+                    btn.classList.remove('bg-slate-800', 'text-white', 'border-slate-800');
+                    btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
+                }
+            }
+            renderDateButtons(); // 배정숨김 상태에 맞춰 날짜 버튼 다시 렌더링
+            filterData();
         }
 
         function filterStatus(status) {
@@ -1184,13 +1262,6 @@
                 if(btn) btn.classList.toggle('active', t === tabName);
                 if(filterGrp) { filterGrp.classList.toggle('hidden', t !== tabName); if(t === tabName) filterGrp.classList.add('flex'); }
             });
-        }
-
-        function toggleCategorySection() {
-            const section = document.getElementById('category-section');
-            const arrow = document.getElementById('fold-arrow');
-            const isCollapsed = section.classList.toggle('collapsed');
-            arrow.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
         }
 
         function setModelFilter(m) { currentModelFilter = m; document.querySelectorAll('.model-filter-item').forEach(b => b.classList.toggle('active', b.dataset.id === m)); filterData(); }
