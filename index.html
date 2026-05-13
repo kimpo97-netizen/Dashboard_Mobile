@@ -147,9 +147,6 @@
         .tab-btn { flex: 1; padding: 12px 0; font-size: 13px; font-weight: 700; color: #94A3B8; border-bottom: 2px solid transparent; transition: all 0.2s; text-align: center; }
         .tab-btn.active { color: #1E293B; border-bottom-color: #1E293B; }
 
-        #category-section { overflow: hidden; transition: all 0.3s ease-out; max-height: 250px; opacity: 1; }
-        #category-section.collapsed { max-height: 0; opacity: 0; padding-top: 0 !important; padding-bottom: 0 !important; margin: 0 !important; }
-
         .model-select-chip, .method-chip { padding: 8px 12px; border-radius: 10px; border: 1px solid #E2E8F0; background: white; color: #64748B; font-size: 12px; font-weight: 700; transition: all 0.2s; flex-shrink: 0; }
         .model-select-chip.active, .method-chip.active { background: #1E293B; color: white; border-color: #1E293B; }
         
@@ -238,6 +235,7 @@
                     <button onclick="switchTab('model')" id="tab-model" class="tab-btn active !py-2 !text-[12px]">📱 모델</button>
                     <button onclick="switchTab('delivery')" id="tab-delivery" class="tab-btn !py-2 !text-[12px]">📦 수령</button>
                     <button onclick="switchTab('return')" id="tab-return" class="tab-btn !py-2 !text-[12px]">↩️ 반납</button>
+                    <button onclick="switchTab('sales')" id="tab-sales" class="tab-btn !py-2 !text-[12px]">💰 매출</button>
                 </div>
 
                 <!-- 카테고리 상세 필터 -->
@@ -269,6 +267,10 @@
                         <button onclick="setReturnFilter('택배')" class="chip-btn return-filter-item" data-id="택배">택배</button>
                         <button onclick="setReturnFilter('당일')" class="chip-btn return-filter-item" data-id="당일">당일</button>
                         <button onclick="setReturnFilter('사무실')" class="chip-btn return-filter-item" data-id="사무실">사무실</button>
+                    </div>
+                    <!-- 매출 필터 영역 -->
+                    <div id="filter-group-sales" class="hidden flex-col gap-2 max-h-[300px] overflow-y-auto hide-scrollbar pb-2">
+                        <!-- calculateSales() 함수에서 동적 생성됨 -->
                     </div>
                 </div>
             </div>
@@ -478,6 +480,7 @@
         let calCurrentDate = new Date(); 
         let selectedSpecificDates = []; // 다중 선택된 날짜를 저장할 배열
         let isHideAssignedActive = false; // 배정숨김 상태 변수 (기본 비활성화)
+        let currentSalesMonthFilter = 'all'; // 매출 탭 월별 필터 상태
 
         window.onload = () => {
             fetchData();
@@ -492,6 +495,7 @@
                     allData = json.data.sort(sortLogic);
                     calculateDuplicates(); // 데이터 로드 후 중복 검사
                     renderDateButtons(); // 요약 버튼 생성
+                    calculateSales(); // 매출 집계 추가
                     filterData();
                 } else { showToast("데이터 로드 실패"); }
             } catch(e) { showToast("네트워크 오류"); } 
@@ -1216,6 +1220,7 @@
             // 2. 즉시 UI 갱신 및 모달 닫기
             calculateDuplicates(); // 정보 수정 시 중복 다시 계산
             renderDateButtons(); // 업데이트 된 정보로 날짜 버튼 건수 재집계
+            calculateSales(); // 정보 수정 시 매출 정보도 즉시 갱신
             filterData();
             closeModal();
             showAppAlert("정보를 수정했습니다.", "완료", "✅"); 
@@ -1235,6 +1240,7 @@
                         allData[targetIndex] = originalData; 
                         calculateDuplicates(); // 에러 복구 시 중복 다시 계산
                         renderDateButtons();
+                        calculateSales(); // 매출 정보 원상복구
                         filterData(); // 화면 원상복구
                         showAppAlert("인터넷 연결 불안정 또는 서버 오류로 수정 내역이 저장되지 않았습니다. 다시 시도해 주세요.", "🚨 저장 실패", "⚠️");
                     }
@@ -1255,6 +1261,7 @@
                 // 2. 즉시 UI 갱신 및 모달 닫기
                 calculateDuplicates(); // 삭제 시 중복 다시 계산
                 renderDateButtons();
+                calculateSales(); // 매출 정보 갱신
                 filterData();
                 closeModal();
                 showAppAlert("삭제 시트로 이동되었습니다.", "완료", "🗑️");
@@ -1272,6 +1279,7 @@
                         allData.push(targetItem); 
                         calculateDuplicates(); // 에러 복구 시 중복 다시 계산
                         renderDateButtons();
+                        calculateSales(); // 매출 정보 복구
                         filterData(); // 화면 원상복구
                         showAppAlert("인터넷 연결 불안정 또는 서버 오류로 삭제되지 않았습니다. 다시 시도해 주세요.", "🚨 삭제 실패", "⚠️");
                     }
@@ -1291,12 +1299,19 @@
         }
 
         function switchTab(tabName) {
-            ['model', 'service', 'delivery', 'return'].forEach(t => {
+            ['model', 'delivery', 'return', 'sales'].forEach(t => {
                 const btn = document.getElementById('tab-' + t);
                 const filterGrp = document.getElementById('filter-group-' + t);
                 if(btn) btn.classList.toggle('active', t === tabName);
                 if(filterGrp) { filterGrp.classList.toggle('hidden', t !== tabName); if(t === tabName) filterGrp.classList.add('flex'); }
             });
+        }
+
+        function toggleCategorySection() {
+            const section = document.getElementById('category-section');
+            const arrow = document.getElementById('fold-arrow');
+            const isCollapsed = section.classList.toggle('collapsed');
+            arrow.style.transform = isCollapsed ? 'rotate(180deg)' : 'rotate(0deg)';
         }
 
         function setModelFilter(m) { currentModelFilter = m; document.querySelectorAll('.model-filter-item').forEach(b => b.classList.toggle('active', b.dataset.id === m)); filterData(); }
@@ -1393,6 +1408,110 @@
         function formatDateShort(ds) {
             const parts = ds.split('-');
             return `${parseInt(parts[1])}월 ${parseInt(parts[2])}일`;
+        }
+
+        // 월별 매출 계산 로직 추가
+        function calculateSales() {
+            const container = document.getElementById('filter-group-sales');
+            if (!container) return;
+
+            const salesByMonth = {};
+
+            allData.forEach(item => {
+                if (item.status === '취소') return; // 취소 건은 집계에서 제외
+                if (!item.startDate) return; // 시작일자가 없는 건 제외
+
+                const monthKey = item.startDate.substring(0, 7); // 'YYYY-MM' 추출
+                if (!salesByMonth[monthKey]) {
+                    salesByMonth[monthKey] = { transfer: 0, card: 0, total: 0 };
+                }
+
+                // 금액 숫자만 추출해서 정수 변환
+                const price = parseInt(String(item.totalPrice || '0').replace(/[^0-9]/g, '')) || 0;
+                const rawPay = item.paymentMethod || '';
+
+                if (rawPay.includes('계좌이체')) {
+                    salesByMonth[monthKey].transfer += price;
+                } else if (rawPay.includes('네이버스토어결제') || rawPay.includes('카드')) {
+                    salesByMonth[monthKey].card += price;
+                }
+                
+                // 결제수단 미지정 상태여도 총 결제금액은 합산
+                salesByMonth[monthKey].total += price; 
+            });
+
+            // 최신 달부터 내림차순 정렬
+            const sortedMonths = Object.keys(salesByMonth).sort().reverse(); 
+            container.innerHTML = '';
+            
+            if (sortedMonths.length === 0) {
+                container.innerHTML = '<div class="text-[12px] text-slate-400 text-center py-4">매출 데이터가 없습니다.</div>';
+                return;
+            }
+
+            // 1. 월별 선택 버튼(칩) 생성 영역
+            const btnWrapper = document.createElement('div');
+            btnWrapper.className = 'flex gap-1.5 overflow-x-auto hide-scrollbar shrink-0 mb-1 pb-1 border-b border-slate-100';
+            
+            const allBtn = document.createElement('button');
+            allBtn.className = `chip-btn ${currentSalesMonthFilter === 'all' ? 'active' : ''}`;
+            allBtn.innerText = '전체';
+            allBtn.onclick = () => setSalesMonthFilter('all');
+            btnWrapper.appendChild(allBtn);
+
+            sortedMonths.forEach(month => {
+                const parts = month.split('-');
+                const yy = parts[0].substring(2, 4); // 연도 뒷자리 2자리 추출 (예: '2026' -> '26')
+                const mm = parseInt(parts[1], 10);
+                const btn = document.createElement('button');
+                btn.className = `chip-btn ${currentSalesMonthFilter === month ? 'active' : ''}`;
+                btn.innerText = `${yy}년 ${mm}월`;
+                btn.onclick = () => setSalesMonthFilter(month);
+                btnWrapper.appendChild(btn);
+            });
+            container.appendChild(btnWrapper);
+
+            // 2. 매출 상세 카드 영역
+            const cardsWrapper = document.createElement('div');
+            cardsWrapper.className = 'flex flex-col gap-2 overflow-y-auto hide-scrollbar';
+
+            sortedMonths.forEach(month => {
+                // 특정 월이 선택되었는데 현재 렌더링 중인 월과 다르면 건너뜀
+                if (currentSalesMonthFilter !== 'all' && currentSalesMonthFilter !== month) return;
+
+                const data = salesByMonth[month];
+                const parts = month.split('-');
+                const yyyy = parts[0];
+                const mm = parseInt(parts[1], 10);
+                
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'bg-white border border-slate-200 rounded-xl p-3 flex flex-col gap-1.5 shadow-sm shrink-0';
+                itemDiv.innerHTML = `
+                    <div class="font-black text-[13px] text-slate-800 border-b border-slate-100 pb-1.5 mb-1 flex items-center justify-between">
+                        <span>${yyyy}년 ${mm}월</span>
+                        <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-1.5 py-0.5 rounded">정산완료</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[12px]">
+                        <span class="text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-100">이체</span>
+                        <span class="font-tnum font-bold text-slate-600">${data.transfer.toLocaleString()}원</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[12px]">
+                        <span class="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">카드</span>
+                        <span class="font-tnum font-bold text-slate-600">${data.card.toLocaleString()}원</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[13px] pt-1.5 mt-0.5 border-t border-slate-100 border-dashed">
+                        <span class="text-slate-800 font-black">합계</span>
+                        <span class="font-tnum font-black text-slate-900">${data.total.toLocaleString()}원</span>
+                    </div>
+                `;
+                cardsWrapper.appendChild(itemDiv);
+            });
+            container.appendChild(cardsWrapper);
+        }
+
+        function setSalesMonthFilter(month) {
+            currentSalesMonthFilter = month;
+            calculateSales(); // 변경된 필터에 맞춰 매출 UI 다시 그리기
         }
 
         // 전체 예약 건의 중복 검사 로직
