@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="white">
-    <title>예약 관리자</title>
+    <title>예약 관리자_admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css" />
     <style>
@@ -480,7 +480,7 @@
         let calCurrentDate = new Date(); 
         let selectedSpecificDates = []; // 다중 선택된 날짜를 저장할 배열
         let isHideAssignedActive = false; // 배정숨김 상태 변수 (기본 비활성화)
-        let currentSalesMonthFilter = 'all'; // 매출 탭 월별 필터 상태
+        let currentSalesMonthFilter = null; // 매출 탭 월별 필터 상태 (기본값 null)
 
         window.onload = () => {
             fetchData();
@@ -1410,6 +1410,15 @@
             return `${parseInt(parts[1])}월 ${parseInt(parts[2])}일`;
         }
 
+        // 현재 한국 시간에 맞는 월('YYYY-MM') 문자열 반환 함수
+        function getCurrentMonthStr() {
+            // 브라우저의 Date 객체를 한국 시간대로 변환하여 연/월 추출
+            const currDate = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
+            const yy = currDate.getFullYear();
+            const mm = String(currDate.getMonth() + 1).padStart(2, '0');
+            return `${yy}-${mm}`;
+        }
+
         // 월별 매출 계산 로직 추가
         function calculateSales() {
             const container = document.getElementById('filter-group-sales');
@@ -1447,6 +1456,17 @@
             if (sortedMonths.length === 0) {
                 container.innerHTML = '<div class="text-[12px] text-slate-400 text-center py-4">매출 데이터가 없습니다.</div>';
                 return;
+            }
+
+            // 초기 로드 시 현재 달을 기본값으로 설정 (만약 아직 설정되지 않았다면)
+            if (currentSalesMonthFilter === null) {
+                const currentMonthKey = getCurrentMonthStr();
+                // 현재 달의 데이터가 있다면 현재 달을, 없다면 최신 달을 기본 선택
+                if (sortedMonths.includes(currentMonthKey)) {
+                    currentSalesMonthFilter = currentMonthKey;
+                } else {
+                    currentSalesMonthFilter = sortedMonths[0]; // 데이터가 있는 가장 최근 달
+                }
             }
 
             // 1. 월별 선택 버튼(칩) 생성 영역
