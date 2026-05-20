@@ -280,10 +280,13 @@
                 <!-- 데이터를 기반으로 동적 생성됨 -->
             </div>
 
-            <!-- 4. 날짜 바 -->
-            <div id="active-date-bar" class="hidden mb-2 px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl flex justify-between items-center">
-                <span id="active-date-text" class="text-blue-600 text-xs font-bold font-tnum"></span>
-                <button onclick="clearDate(event)" class="text-blue-400 hover:text-blue-600 font-bold text-[10px] px-2 py-1 bg-white rounded-lg border border-blue-100">해제</button>
+            <!-- 4. 날짜 바 및 수량 요약 -->
+            <div id="active-date-wrapper" class="hidden mb-2">
+                <div class="px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl flex justify-between items-center">
+                    <span id="active-date-text" class="text-blue-600 text-xs font-bold font-tnum"></span>
+                    <button onclick="clearDate(event)" class="text-blue-400 hover:text-blue-600 font-bold text-[10px] px-2 py-1 bg-white rounded-lg border border-blue-100 shrink-0 ml-2 shadow-sm">해제</button>
+                </div>
+                <div id="active-date-models" class="flex flex-wrap gap-1.5 mt-2 px-1"></div>
             </div>
         </div>
         <input type="date" id="filter-date" class="hidden">
@@ -486,10 +489,16 @@
         let dateRange = { start: null, end: null };
         let calCurrentDate = new Date(); 
         let selectedSpecificDates = []; // 다중 선택된 날짜를 저장할 배열
-        let isHideAssignedActive = false; // 배정숨김 상태 변수 (기본 비활성화)
+        let isHideAssignedActive = true; // 배정숨김 상태 변수 (기본 활성화)
         let currentSalesMonthFilter = null; // 매출 탭 월별 필터 상태 (기본값 null)
 
         window.onload = () => {
+            // 배정숨김(미배정) 버튼 기본 활성화 UI 적용
+            const btnHideAssigned = document.getElementById('btn-quick-hide-assigned');
+            if (btnHideAssigned) {
+                btnHideAssigned.classList.add('bg-slate-800', 'text-white', 'border-slate-800');
+                btnHideAssigned.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
+            }
             fetchData();
         };
 
@@ -518,10 +527,10 @@
             const now = new Date();
             const todayStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
             
-            // 향후 7일 날짜 계산
-            const nextWeek = new Date(now);
-            nextWeek.setDate(now.getDate() + 7);
-            const nextWeekStr = nextWeek.getFullYear() + '-' + String(nextWeek.getMonth() + 1).padStart(2, '0') + '-' + String(nextWeek.getDate()).padStart(2, '0');
+            // 향후 30일 날짜 계산
+            const limitDate = new Date(now);
+            limitDate.setDate(now.getDate() + 30);
+            const limitDateStr = limitDate.getFullYear() + '-' + String(limitDate.getMonth() + 1).padStart(2, '0') + '-' + String(limitDate.getDate()).padStart(2, '0');
 
             let totalValidCount = 0; // 전체 건수 계산용
 
@@ -538,8 +547,8 @@
                 totalValidCount++; // 전체 건수 누적
 
                 const d = item.startDate;
-                // 오늘 이전이거나 향후 7일 이후의 일정은 요약 버튼 생성에서 제외
-                if (!d || d < todayStr || d > nextWeekStr) return; 
+                // 오늘 이전이거나 향후 30일 이후의 일정은 요약 버튼 생성에서 제외
+                if (!d || d < todayStr || d > limitDateStr) return; 
                 
                 countsByDate[d] = (countsByDate[d] || 0) + 1;
             });
@@ -763,6 +772,7 @@
             updateFilterUI(counts);
             filtered.sort(sortLogic);
             renderList(filtered); 
+            updateActiveDateModelsUI(filtered); // 추가: 모델 수량 계산 및 렌더링 호출
         }
 
         function updateFilterUI(counts) {
@@ -1389,12 +1399,12 @@
         }
 
         function updateActiveDateUI() {
-            const bar = document.getElementById('active-date-bar');
+            const wrapper = document.getElementById('active-date-wrapper');
             const text = document.getElementById('active-date-text');
             const dot = document.getElementById('date-active-dot');
 
             if (selectedSpecificDates.length > 0) {
-                bar.classList.remove('hidden');
+                wrapper.classList.remove('hidden');
                 dot.classList.remove('hidden');
                 const sortedDates = [...selectedSpecificDates].sort();
                 if (sortedDates.length === 1) {
@@ -1403,7 +1413,7 @@
                     text.innerText = `${formatDateShort(sortedDates[0])} 외 ${sortedDates.length - 1}일 선택됨`;
                 }
             } else if (dateRange.start) {
-                bar.classList.remove('hidden');
+                wrapper.classList.remove('hidden');
                 dot.classList.remove('hidden');
                 if (dateRange.end) {
                     text.innerText = `${formatDateShort(dateRange.start)} ~ ${formatDateShort(dateRange.end)}`;
@@ -1411,9 +1421,59 @@
                     text.innerText = `${formatDateShort(dateRange.start)} (기간 선택 중)`;
                 }
             } else {
-                bar.classList.add('hidden');
+                wrapper.classList.add('hidden');
                 dot.classList.add('hidden');
             }
+        }
+
+        function updateActiveDateModelsUI(list) {
+            const container = document.getElementById('active-date-models');
+            if (!container) return;
+            container.innerHTML = '';
+
+            // 날짜 필터가 없으면 요약 표시 안 함
+            if (selectedSpecificDates.length === 0 && !dateRange.start) {
+                return;
+            }
+
+            const modelCounts = {};
+            let total = 0;
+
+            list.forEach(item => {
+                if (item.status === '취소' || item.status === '반납완료') return; 
+                let rawModel = (item.model || '').toUpperCase().replace(/\s*\+?\s*보조배터리/g, '').trim();
+                
+                let matchedModel = '미정';
+                for (const m of MODEL_LIST) {
+                    if (rawModel.includes(m)) {
+                        matchedModel = m;
+                        break;
+                    }
+                }
+                if(rawModel.includes('백업')) matchedModel = '백업';
+                if(rawModel.includes('연장')) matchedModel = '연장';
+                if(matchedModel === '미정' && rawModel) matchedModel = '기타';
+
+                modelCounts[matchedModel] = (modelCounts[matchedModel] || 0) + 1;
+                total++;
+            });
+
+            if (total === 0) return;
+
+            const sortedModels = Object.keys(modelCounts).sort((a, b) => {
+                let idxA = MODEL_LIST.indexOf(a);
+                let idxB = MODEL_LIST.indexOf(b);
+                if(idxA === -1) idxA = 99;
+                if(idxB === -1) idxB = 99;
+                return idxA - idxB;
+            });
+
+            sortedModels.forEach(m => {
+                const badge = document.createElement('span');
+                badge.className = 'text-[11px] font-black text-blue-500 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-lg font-tnum shadow-sm flex items-center gap-1 shrink-0';
+                badge.innerHTML = `<span>${m}</span><span class="text-blue-800 font-extrabold">${modelCounts[m]}</span>`;
+                container.appendChild(badge);
+            });
         }
 
         function formatDateShort(ds) {
