@@ -1564,7 +1564,8 @@
                     const nameA = (a.name || '').replace(/\s/g, '');
                     const nameB = (b.name || '').replace(/\s/g, '');
                     
-                    if (nameA && nameA === nameB) {
+                    // 이름과 대여 시작일이 모두 같은 경우에만 중복 검사 진행
+                    if (nameA && nameA === nameB && a.startDate === b.startDate) {
                         // 연락처가 4자리 이상 이어져서 일치하는지 확인
                         if (isPhoneSimilar(a.phone, b.phone)) {
                             a.isDuplicate = true;
